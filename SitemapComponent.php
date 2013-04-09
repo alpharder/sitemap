@@ -38,7 +38,8 @@ class SitemapComponent extends CApplicationComponent
 
 
     /**
-     * @param bool $refresh
+     * @param bool $refresh Whether structure renewal is needed.
+     *                      For example, if structure builder class or structure component class was changed.
      *
      * @return array|components\AppStructureComponent[]
      */
