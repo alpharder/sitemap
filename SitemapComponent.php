@@ -10,6 +10,7 @@ use yiiExtensions\sitemap\components\AppStructureComponent;
 /**
  * Class SitemapComponent
  *
+ * @author  Alexander Bolshakov <a.bolshakov.coder@gmail.com>
  * @package yiiExtensions\sitemap
  */
 class SitemapComponent extends CApplicationComponent

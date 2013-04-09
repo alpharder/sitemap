@@ -11,6 +11,7 @@ use Yii;
  *
  * Provides abstraction for working with modules, controllers and actions.
  *
+ * @author  Alexander Bolshakov <a.bolshakov.coder@gmail.com>
  * @package yiiExtensions\sitemap\components
  */
 class AppStructureComponent

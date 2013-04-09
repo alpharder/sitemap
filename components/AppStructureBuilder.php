@@ -18,6 +18,7 @@ use Yii;
  *
  * @see     AppStructureComponent
  *
+ * @author  Alexander Bolshakov <a.bolshakov.coder@gmail.com>
  * @package yiiExtensions\sitemap\components
  */
 class AppStructureBuilder
