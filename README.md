@@ -58,92 +58,118 @@ You may want to write a widget for displaying that data in a pretty way.
 
 It is not cool. What about use-cases?
 -------------------------------------
-Suppose that you have ```PagesController```, that displays static pages stored at DB. You may want to display the list of those pages at your sitemap section, so you can write something like this:
-
-At your controller:
-```php
-class PagesController extends CController
-{
-   public function getPagesForSitemap()
+*  Suppose that you have ```PagesController```, that displays static pages stored at DB. You may want to display the list of those pages at your sitemap section, so you can write something like this:
+   
+   At your controller:
+   ```php
+   class PagesController extends CController
    {
-      return new CActiveDataProvider(Page::model());
-   }
-}
-```
-
-Now, let's modify our rendering of sitemap:
-```php
-
-foreach ($structure as $structureNode)
-{
-   echo '<ul>';
-      echo "<li>Name: {$structureNode->getName()}</li>";
-      echo "<li>Description: {$structureNode->getDescription()}</li>";
-      echo "<li>Route: {$structureNode->getRoute()}</li>";
-      echo '<li>Class: '.get_class($structureNode->getInstance()).'</li>';
-      if ($structureNode->getInstance() instanceof PagesController)
+      public function getPagesForSitemap()
       {
-         echo '<li>Pages: ';
-         $this->widget('zii.widgets.grid.CGridView', array('dataProvider'=>$structureNode->getInstance()->getPagesForSitemap()));
-         echo '</li>';
-      } else {
-         echo '<li>Children: ';
-         displayStructure($structureNode->getChildren());
-         echo '</li>';
+         return new CActiveDataProvider(Page::model());
       }
-   echo '</ul>';
-}
-```
-Also, you can create an interface for your modules or controllers and change behavior when current instance 
-of application component implements it at rendering or at initialization of AppStructureComponent instance.
-
-If the former, you already know how to do it. If the latter, you need to extend AppStructureComponent class.
-A tiny example of this:
-
-```php
-interface IHaveInfoAboutActions
-{
-   /**
-    * @return array 'actionID'=>['name'=>..., 'description'=>...] 
-    */
-   public function getActionsInfo();
-}
-
-class MyController extends CController implements IHaveInfoAboutActions
-{
-   public function actionIndex()
+   }
+   ```
+   
+   Now, let's modify sitemap rendering:
+   ```php
+   
+   foreach ($structure as $structureNode)
    {
-      // some stuff here
+      echo '<ul>';
+         echo "<li>Name: {$structureNode->getName()}</li>";
+         echo "<li>Description: {$structureNode->getDescription()}</li>";
+         echo "<li>Route: {$structureNode->getRoute()}</li>";
+         echo '<li>Class: '.get_class($structureNode->getInstance()).'</li>';
+         if ($structureNode->getInstance() instanceof PagesController)
+         {
+            echo '<li>Pages: ';
+            $this->widget('zii.widgets.grid.CGridView', array('dataProvider'=>$structureNode->getInstance()->getPagesForSitemap()));
+            echo '</li>';
+         } else {
+            echo '<li>Children: ';
+            displayStructure($structureNode->getChildren());
+            echo '</li>';
+         }
+      echo '</ul>';
+   }
+   ```
+*  Also, you can create an interface for your modules or controllers and change behavior when current instance 
+   of application component implements it at rendering or at initialization of AppStructureComponent instance.
+   
+   If the former, you already know how to do it. If the latter, you need to extend AppStructureComponent class.
+   A tiny example of this:
+   
+   ```php
+   interface IHaveInfoAboutActions
+   {
+      /**
+       * @return array 'actionID'=>['name'=>..., 'description'=>...] 
+       */
+      public function getActionsInfo();
    }
    
-   public function getActionsInfo()
+   class MyController extends CController implements IHaveInfoAboutActions
    {
-      return array('index'=>array('name'=>'My cool action', 'description'=>'I can do some stuff'));
-   }
-}
-
-class MyAppStructureComponent extends \yiiExtensions\sitemap\components\AppStructureComponent
-{
-
-    /**
-     * @param CAction $instance
-     */
-    public function initFromAction($instance)
-    {
-      parent::initFromAction($instance);
-      if($instance->getController() instanceof IHaveInfoAboutActions)
+      public function actionIndex()
       {
-         $info = $instance->getController()->getActionsInfo();
-         if (isset($info[$instance->getId()]))
-         {
-            $this->name = $info[$instance->getId()]['name'];
-            $this->description = $info[$instance->getId()]['description'];
-         }
+         // some stuff here
       }
-    }
-}
+      
+      public function getActionsInfo()
+      {
+         return array('index'=>array('name'=>'My cool action', 'description'=>'I can do some stuff'));
+      }
+   }
+   
+   class MyAppStructureComponent extends \yiiExtensions\sitemap\components\AppStructureComponent
+   {
+   
+       /**
+        * @param CAction $instance
+        */
+       public function initFromAction($instance)
+       {
+         parent::initFromAction($instance);
+         if($instance->getController() instanceof IHaveInfoAboutActions)
+         {
+            $info = $instance->getController()->getActionsInfo();
+            if (isset($info[$instance->getId()]))
+            {
+               $this->name = $info[$instance->getId()]['name'];
+               $this->description = $info[$instance->getId()]['description'];
+            }
+         }
+       }
+   }
+   
+   // when fetching structure
+   Yii::app()->sitemap->structureComponentClass = 'MyAppStructureComponent';
+   $applicationStructure = Yii::app()->sitemap->getApplicationStructure();
+   ```
 
-// when fetching structure
-Yii::app()->sitemap->structureComponentClass = 'MyAppStructureComponent';
-$applicationStructure = Yii::app()->sitemap->getApplicationStructure();
-```
+*  If you need to check whether component is suitable for addition to output structure,
+   you should override AppStructureComponent::validate() method. 
+   
+   This example disables all actions, which are under the influence of the "ajaxOnly" filter:
+   
+   ```php
+   class MyAppStructureComponent extends \yiiExtensions\sitemap\components\AppStructureComponent
+   {
+       public function validate()
+       {
+           if ($this->getInstance() instanceof CAction) {
+               $controller  = $this->getInstance()->getController();
+               $filters     = $controller->filters();
+               $filterChain = CFilterChain::create($controller, $this->getInstance(), $filters);
+               foreach ($filterChain as $filter) {
+                   if ($filter instanceof CInlineFilter && $filter->name == 'ajaxOnly') {
+                       return false;
+                   }
+               }
+           }
+   
+           return true;
+       }
+   }
+   ```
