@@ -59,16 +59,17 @@ class AppStructureBuilder
             }
             if (($module = Yii::app()->getModule($moduleID)) instanceof CWebModule) {
                 $structureComponent = new $this->appStructureComponentClass($module);
-
-                // gonna deep to controllers too
-                if ($only !== AppStructureComponent::TYPE_MODULE) {
-                    $structureComponent->setChildren(
-                        $this->getControllersForModule($module),
-                        // gonna deep to actions too
-                        ($only !== AppStructureComponent::TYPE_CONTROLLER)
-                    );
+                if ($structureComponent->validate()) {
+                    // gonna deep to controllers too
+                    if ($only !== AppStructureComponent::TYPE_MODULE) {
+                        $structureComponent->setChildren(
+                            $this->getControllersForModule($module),
+                            // gonna deep to actions too
+                            ($only !== AppStructureComponent::TYPE_CONTROLLER)
+                        );
+                    }
+                    $structure[] = $structureComponent;
                 }
-                $structure[] = $structureComponent;
             }
         }
 
@@ -117,10 +118,12 @@ class AppStructureBuilder
                         $controllerID       = lcfirst(str_replace('Controller', '', $className));
                         $controllerInstance = new $className($controllerID, $module);
                         $structureComponent = new $this->appStructureComponentClass($controllerInstance);
-                        if ($deepToActions) {
-                            $structureComponent->setChildren($this->getActionsForController($controllerInstance));
+                        if ($structureComponent->validate()) {
+                            if ($deepToActions) {
+                                $structureComponent->setChildren($this->getActionsForController($controllerInstance));
+                            }
+                            $controllers[$controllerID] = $structureComponent;
                         }
-                        $controllers[$controllerID] = $structureComponent;
                     }
                 }
             }
@@ -131,11 +134,12 @@ class AppStructureBuilder
         foreach ($module->controllerMap as $controllerID => $controllerConfig) {
             $controllerInstance = Yii::createComponent($controllerConfig, $controllerID, $module);
             $structureComponent = new $this->appStructureComponentClass($controllerInstance);
-
-            if ($deepToActions) {
-                $structureComponent->setChildren($this->getActionsForController($controllerInstance));
+            if ($structureComponent->validate()) {
+                if ($deepToActions) {
+                    $structureComponent->setChildren($this->getActionsForController($controllerInstance));
+                }
+                $controllers[$controllerID] = $structureComponent;
             }
-            $controllers[$controllerID] = $structureComponent;
         }
 
         return $controllers;
@@ -176,9 +180,10 @@ class AppStructureBuilder
             $actionInstance = $controller->createAction($actionID);
             if ($actionInstance instanceof CAction) {
                 $structureComponent = new $this->appStructureComponentClass($actionInstance);
-                $actions[]          = $structureComponent;
+                if ($structureComponent->validate()) {
+                    $actions[] = $structureComponent;
+                }
             }
-
         }
 
         return $actions;

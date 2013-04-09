@@ -67,6 +67,16 @@ class AppStructureComponent
     }
 
     /**
+     * Override this method if you need to check whether current component is suitable for addition to output structure.
+     *
+     * @return bool
+     */
+    public function validate()
+    {
+        return true;
+    }
+
+    /**
      * @param CWebModule $instance
      */
     public function initFromModule($instance)
