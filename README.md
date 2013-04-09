@@ -30,7 +30,7 @@ Installation
 
 Usage
 -----
-Just copy&paste this code to one of your actions to see what this component can do:
+Just copy&paste this code to one of your views to see what this component can do:
 ```php
 // It is a list of AppStructureComponent
 $applicationStructure = Yii::app()->sitemap->getApplicationStructure();
