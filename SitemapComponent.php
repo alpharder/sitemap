@@ -15,7 +15,6 @@ use yiiExtensions\sitemap\components\AppStructureComponent;
  */
 class SitemapComponent extends CApplicationComponent
 {
-
     /**
      * @var string
      */
